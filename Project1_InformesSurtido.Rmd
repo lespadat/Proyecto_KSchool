@@ -1,0 +1,176 @@
+---
+title: "Proyecto fin de curso DataScientist K-School"
+author: "Luis Espada"
+output: slidy_presentation
+---
+
+
+
+## Visualizacion datos con Shiny
+
+Desde que conoci Shiny tuve claro que me podia resultar tremendamente util en mi trabajo diario en Carrefour. Gestiono los precios de cesion y de venta a las Franquicias Carrefour Express y elaboro muchos informes en excel para los responsables Comerciales y para los responsables de Explotacion de las tiendas
+
+Shiny, combinado con R y PostgreSQL me permite poner a su disposicion una herramienta con la cual estos informes "estáticos" pasan a ser "dinámicos" y pueden interactuar con los datos a través de multiples criterios de seleccion. 
+
+He planteado este proyecto como un sistema **sencillo** y sobre todo **aplicable** a mi puesto de trabajo. 
+
+
+**Importante:** En los dos casos he ocultado todo dato significativo (códigos, estructuras, descripciones, ...)
+
+
+## Tecnologia empleada
+
+  - R 
+  - Shiny
+  
+  En la instalaciones de estos aplicativos en Carrefour combino estas tecnologias con PostgreSQL
+  
+  Para presentar este trabajo he sustituido esos accesos directos a BB.DD por ficheros .csv 
+
+
+  La instalacion para validar los dos aplicativos que planteo es muy sencilla. El unico cambio que debeis realizar es cambiar el directorio de trabajo en el fichero que lanza cada aplicacion 
+  
+    analisisSurtido.R
+    analisisTickets.R
+    
+  Las librerias de R necesarias tambien son muy basicas
+  
+    shiny
+    data.table
+    dplyr
+    ggplot2
+    
+
+
+## Aplicativo 1: Análisis Venta y Rentabilidad Surtido 
+
+Toma como entrada datos **referenciales del surtido** (estructura de categorias, proveedor, caracteristicas marketing, etc) y datos de **ventas por articulo - tienda**
+
+  
+A partir de estos datos se ofrecen al usuario cuatro posibles informes. La potencia de este sistema es que permite generar estos informes con una disponibilidad **inmediata** y combinando **criterios de seleccion referentes al Surtido** (*seccion-Grupo-Familia*, niveles que definen la estructura comercial del surtido, *Nivel de surtido*, *Proveedor* y/o *Caracteristicas Marketing de los articulos*) junto a **criterios de seleccion referentes a las Tiendas** (*region*, *rol*, *una tienda en concreto*)
+
+
+Las dos primeras pestañas son informe referentes a articulos. La tercera y cuarta generan informes referentes a tiendas
+  
+
+## Pestaña 1: Indicadores Artículo
+  
+  Muestra un data.table con datos referentes a los articulos-tiendas que cumplan los criterios seleccionados
+  
+  ![](analisisSurtido\images\image1.png)
+
+
+
+## Pestaña 2: Dispersion articulos por Venta media y Margen
+
+  Plotea los articulos que cumplan los articulos seleccionados en funcion de su venta media por tienda y su margen
+  
+  En este informe he añadido dos criterios de seleccion especiales: 
+  
+  + filtro numerico para excluir articulos presentes en pocas tiendas (dado que uno de los ejes es la venta media por tienda pueden distorsionar la visualizacion articulos regionales de venta media elevada)
+  + check para excluir en la visualizacion outliers por su margen (margen con una desviacion respecto al margen medio de los articulos seleccionados superior a tres veces la desviacion tipica). Si no se marca el check se muestran los limites a partir de los que se considera outlier
+  
+    ![](analisisSurtido\images\image2.png)
+
+
+
+## Pestaña 3: Presencia de una categoria en las tiendas por Region / Rol
+
+  Como comentaba antes esta pestaña y la siguiente permiten realizar analisis sobre el comportamiento del surtido a nivel Tienda 
+
+  Este informe genera un boxplot con la presencia del surtido (el peso que tiene este surtido sobre la venta total de la tienda) que cumpla los criterios de seleccion del menu lateral izquierdo (criterios de seleccion articulos)
+  
+  Un radio button permite visualizar la informacion agrupando las tiendas por su Region geografica o por su Rol. 
+  
+  Es necesario seleccionar al menos un criterio en el menu lateral izquierdo para empezar a obtener datos significativos, puesto que si no calcula que todo el surtido de la tienda supone el 100% de la venta total de la tienda
+  
+  ![](analisisSurtido\images\image3.png)
+    
+
+  
+## Pestaña 4: Dispersion tiendas por Venta media y Margen
+
+  Es un informe similar al de la segunda pestaña pero aplicado a tiendas. Es muy interesante sobre todo en lo referente al margen puesto que identifica que tiendas, con misma tarifa de PVP, consiguen mayor margen en una categoria que otras tiendas similares. Una vez identificadas estas tiendas se puede analizar su estructura de mix de venta para intentar aplicarla a las otras tiendas y mejorar asi su margen global
+
+  ![](analisisSurtido\images\image4.png)
+    
+
+
+
+
+
+## Aplicativo 2: Analisis Tickets Hipermercado
+
+Toma como entrada datos **referenciales del surtido** (estructura de categorias, proveedor, caracteristicas marketing, etc) y **detalle de tickets reales de un hipermercado para clientes de la Tarjeta Club Carrefour**
+
+Para realizar las pruebas del sistema presento un juego de datos de unos cuatro millones de lineas, siendo cada linea, una categoria de articulos presente en un ticket
+
+A partir fabrico un sistema de recomendacion donde a partir de un categoria X de articulos el sistema recomienda aquellas otras categorias que aparecen mas frecuentemente en los mismos tickets en los que aparece dicha categoria X
+
+Inicialmente plantee este aplicativo utilizando el analisis *Market Basket with R*, que emplea la libreria
+**apriori**, pero Los resultados que obtenia con estos procesos no me satisfacian, dado que no vi una manera satisfactoria para evitar las *categorias evidentes*, es decir, categorias de articulos de primera necesidad que aparecen recurrentemente en un gran numero de tickets (Pan, Tomates, Leches basicas, ...)
+
+Por ese motivo al final me propuse realizar yo el analisis desde cero, cruzando los datos optimizando los data.tables de R con claves *setkey* y con el uso de los tuberias que aporta la libreria *dplyr*
+
+Para la visualizacion de este sistema de *correlacion* entre categorias de surtido utilizo un tipo de grafico de *ggplot* llamado *geom_tile*
+
+
+
+## Pestaña 4: Representacion de las *Categorias Evidentes*
+  
+  Empiezo por la ultima pestaña. Plotea una curva que tiene en el eje *x* el numero de diferentes categorias de articulos que hay en el conjunto de tickets tratados. Se entiende que estas categorias estan ordenadas empezando por las mas *evidentes* (mas veces presentes en los tickets) 
+  
+  En el eje *y* el peso que supone el numero de diferentes categorias seleccionadas sobre el total de lineas de detalle *ticket-categoria*
+  
+  ![](analisisTickets\images\image1.png)
+
+  Asi, el grafico anterior muestra que hay unas 2500 diferentes categorias de articulos y que aproximadamente unas 100 (4%) suponen el 40% de todas las relaciones ticket-categoria. 
+  
+  
+
+
+## Pestaña 1: Top10 relaciones por Categoria
+
+  La estructura comercial de los surtidos de articulos Carrefour tiene cuatro niveles anidados. 
+  
+  En esta pestaña es obligatorio seleccionar llegar, a través de los *selectInput* del menu lateral izquierdo, a seleccionar el tercer nivel *familia*
+  
+  El aplicativo desglosa las categorias (subfamilias) que componen el cuarto nivel de la estructura comercial y por cada una de ellas se identifican las otras 10 categorias que aparecen mas frecuentemente en los tickets en los que aparece la misma. 
+  
+  
+  ![](analisisTickets\images\image2.png)
+    
+    
+  El *numericInput* del menu lateral izquierda excluye de la seleccion de categorias mostradas aquellas que suponen el peso indicado en este selector sobre el total de las relaciones ticket-categoria. 
+
+
+
+## Pestaña 2: Comparativa vs Familia
+
+  Es la misma logica descrita en el punto anterior, pero la busqueda de *categorias complementarias* no es sobre el total de categorias existentes en Carrefour, sino que se centran en una segunda familia en concreta. 
+
+  ![](analisisTickets\images\image3.png)
+  
+
+  
+## Pestaña 3: Analisis Cliente
+
+  Los *selectInput* del menu lateral izquierdo no aplican en esta pestaña. 
+  
+  A traves de un nuevo *selectInput* se selecciona un cliente concreto. Evidentemente se ha recodificado su identificacion de Tarjeta Club. 
+  
+  El sistema identifica las cinco categorias mas presentes en los tickets del cliente
+  
+  Por cada una de estas categorias se identifican las cinco categorias que aparecen mas frecuentemente en los tickets en los que aparece la misma. Si aplica el *numericInput* para excluir las *categorias evidentes* como se describia en los puntos anteriores 
+  
+  ![](analisisTickets\images\image4.png)
+  
+  Por cada relacion *categoria Top Cliente / categoria Top complementaria* el color indica si el cliente analizado es consumidor de la categoria complementaria o no, ya que, si no lo es, pareceria interesante proponersela a traves de los cupones destinados a propietarios de Tarjeta Club. 
+
+  
+    
+
+
+
+
+
